@@ -1,0 +1,241 @@
+apiVersion: v1
+items:
+- apiVersion: apps/v1
+  kind: DaemonSet
+  metadata:
+    annotations:
+      deprecated.daemonset.template.generation: "1"
+    labels:
+      app: prometheus
+      chart: prometheus-11.16.9
+      component: node-exporter
+      heritage: Helm
+      release: loki
+    name: loki-prometheus-node-exporter
+    namespace: loki
+  spec:
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app: prometheus
+        component: node-exporter
+        release: loki
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          app: prometheus
+          chart: prometheus-11.16.9
+          component: node-exporter
+          heritage: Helm
+          release: loki
+      spec:
+        containers:
+        - args:
+          - --path.procfs=/host/proc
+          - --path.sysfs=/host/sys
+          - --web.listen-address=:9100
+          image: prom/node-exporter:v1.0.1
+          imagePullPolicy: IfNotPresent
+          name: prometheus-node-exporter
+          ports:
+          - containerPort: 9100
+            hostPort: 9100
+            name: metrics
+            protocol: TCP
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /host/proc
+            name: proc
+            readOnly: true
+          - mountPath: /host/sys
+            name: sys
+            readOnly: true
+        dnsPolicy: ClusterFirst
+        hostNetwork: true
+        hostPID: true
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        serviceAccount: loki-prometheus-node-exporter
+        serviceAccountName: loki-prometheus-node-exporter
+        terminationGracePeriodSeconds: 30
+        tolerations:
+        - operator: Exists
+        volumes:
+        - hostPath:
+            path: /proc
+            type: ""
+          name: proc
+        - hostPath:
+            path: /sys
+            type: ""
+          name: sys
+    updateStrategy:
+      rollingUpdate:
+        maxUnavailable: 1
+      type: RollingUpdate
+- apiVersion: apps/v1
+  kind: DaemonSet
+  metadata:
+    annotations:
+      deprecated.daemonset.template.generation: "3"
+      prometheus.io/path: /metrics
+      prometheus.io/port: "9427"
+      prometheus.io/scrape: "true"
+    labels:
+      app: ping-exporter
+    name: ping-exporter
+    namespace: loki
+  spec:
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app: ping-exporter
+    template:
+      metadata:
+        annotations:
+          kubectl.kubernetes.io/restartedAt: "2022-01-22T00:28:53+01:00"
+          prometheus.io/path: /metrics
+          prometheus.io/port: "9427"
+          prometheus.io/scrape: "true"
+        creationTimestamp: null
+        labels:
+          app: ping-exporter
+      spec:
+        containers:
+        - image: czerwonk/ping_exporter
+          imagePullPolicy: Always
+          name: ping-exporter-jtsfc
+          ports:
+          - containerPort: 9427
+            hostPort: 9427
+            name: metrics
+            protocol: TCP
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /config/
+            name: config
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - configMap:
+            defaultMode: 420
+            name: ping-exporter
+          name: config
+    updateStrategy:
+      rollingUpdate:
+        maxUnavailable: 1
+      type: RollingUpdate
+- apiVersion: apps/v1
+  kind: DaemonSet
+  metadata:
+    annotations:
+      deprecated.daemonset.template.generation: "2"
+    labels:
+      app: promtail
+      chart: promtail-2.2.0
+      heritage: Helm
+      release: loki
+    name: loki-promtail
+    namespace: loki
+  spec:
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app: promtail
+        release: loki
+    template:
+      metadata:
+        annotations:
+          checksum/config: 8c87a13d751c87f1b8726a725bffbe18c827c5e60d4a7aea47cd4871ea8271f3
+          kubectl.kubernetes.io/restartedAt: "2022-01-20T17:44:14+01:00"
+          prometheus.io/port: http-metrics
+          prometheus.io/scrape: "true"
+        creationTimestamp: null
+        labels:
+          app: promtail
+          release: loki
+      spec:
+        containers:
+        - args:
+          - -config.file=/etc/promtail/promtail.yaml
+          - -client.url=http://loki:3100/loki/api/v1/push
+          env:
+          - name: HOSTNAME
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: spec.nodeName
+          image: grafana/promtail:2.1.0
+          imagePullPolicy: IfNotPresent
+          name: promtail
+          ports:
+          - containerPort: 3101
+            name: http-metrics
+            protocol: TCP
+          readinessProbe:
+            failureThreshold: 5
+            httpGet:
+              path: /ready
+              port: http-metrics
+              scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+          securityContext:
+            readOnlyRootFilesystem: true
+            runAsGroup: 0
+            runAsUser: 0
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /etc/promtail
+            name: config
+          - mountPath: /run/promtail
+            name: run
+          - mountPath: /var/lib/docker/containers
+            name: docker
+            readOnly: true
+          - mountPath: /var/log/pods
+            name: pods
+            readOnly: true
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        serviceAccount: loki-promtail
+        serviceAccountName: loki-promtail
+        terminationGracePeriodSeconds: 30
+        tolerations:
+        - effect: NoSchedule
+          key: node-role.kubernetes.io/master
+          operator: Exists
+        volumes:
+        - configMap:
+            defaultMode: 420
+            name: loki-promtail
+          name: config
+        - hostPath:
+            path: /run/promtail
+            type: ""
+          name: run
+        - hostPath:
+            path: /var/lib/docker/containers
+            type: ""
+          name: docker
+        - hostPath:
+            path: /var/log/pods
+            type: ""
+          name: pods
+    updateStrategy:
+      rollingUpdate:
+        maxUnavailable: 1
+      type: RollingUpdate
+kind: List
+metadata:
+  resourceVersion: ""
+  selfLink: ""

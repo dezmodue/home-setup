@@ -1,0 +1,36 @@
+apiVersion: v1
+items:
+- apiVersion: extensions/v1beta1
+  kind: Ingress
+  metadata:
+    name: prometheus
+    namespace: loki
+  spec:
+    rules:
+    - host: prometheus.k3s.mywire.org
+      http:
+        paths:
+        - backend:
+            serviceName: loki-prometheus-server
+            servicePort: 80
+          path: /
+          pathType: Prefix
+- apiVersion: extensions/v1beta1
+  kind: Ingress
+  metadata:
+    name: grafana
+    namespace: loki
+  spec:
+    rules:
+    - host: grafana.k3s.mywire.org
+      http:
+        paths:
+        - backend:
+            serviceName: loki-grafana
+            servicePort: 80
+          path: /
+          pathType: Prefix
+kind: List
+metadata:
+  resourceVersion: ""
+  selfLink: ""

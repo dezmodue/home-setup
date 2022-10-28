@@ -1,0 +1,925 @@
+apiVersion: v1
+items:
+- apiVersion: v1
+  kind: Pod
+  metadata:
+    annotations:
+      checksum/config: 8c87a13d751c87f1b8726a725bffbe18c827c5e60d4a7aea47cd4871ea8271f3
+      kubectl.kubernetes.io/restartedAt: "2022-01-20T17:44:14+01:00"
+      prometheus.io/port: http-metrics
+      prometheus.io/scrape: "true"
+    labels:
+      app: promtail
+      controller-revision-hash: b6c56d7c7
+      pod-template-generation: "2"
+      release: loki
+    name: loki-promtail-jvg8t
+    namespace: loki
+  spec:
+    affinity:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+          - matchFields:
+            - key: metadata.name
+              operator: In
+              values:
+              - pi4
+    containers:
+    - args:
+      - -config.file=/etc/promtail/promtail.yaml
+      - -client.url=http://loki:3100/loki/api/v1/push
+      env:
+      - name: HOSTNAME
+        valueFrom:
+          fieldRef:
+            fieldPath: spec.nodeName
+      image: grafana/promtail:2.1.0
+      name: promtail
+      ports:
+      - containerPort: 3101
+        name: http-metrics
+      readinessProbe:
+        failureThreshold: 5
+        httpGet:
+          path: /ready
+          port: http-metrics
+        initialDelaySeconds: 10
+      securityContext:
+        readOnlyRootFilesystem: true
+        runAsGroup: 0
+        runAsUser: 0
+      volumeMounts:
+      - mountPath: /etc/promtail
+        name: config
+      - mountPath: /run/promtail
+        name: run
+      - mountPath: /var/lib/docker/containers
+        name: docker
+        readOnly: true
+      - mountPath: /var/log/pods
+        name: pods
+        readOnly: true
+      - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+        name: loki-promtail-token-ccc4w
+        readOnly: true
+    priority: 0
+    serviceAccountName: loki-promtail
+    tolerations:
+    - effect: NoSchedule
+      key: node-role.kubernetes.io/master
+      operator: Exists
+    - effect: NoExecute
+      key: node.kubernetes.io/not-ready
+      operator: Exists
+    - effect: NoExecute
+      key: node.kubernetes.io/unreachable
+      operator: Exists
+    - effect: NoSchedule
+      key: node.kubernetes.io/disk-pressure
+      operator: Exists
+    - effect: NoSchedule
+      key: node.kubernetes.io/memory-pressure
+      operator: Exists
+    - effect: NoSchedule
+      key: node.kubernetes.io/pid-pressure
+      operator: Exists
+    - effect: NoSchedule
+      key: node.kubernetes.io/unschedulable
+      operator: Exists
+    volumes:
+    - configMap:
+        name: loki-promtail
+      name: config
+    - hostPath:
+        path: /run/promtail
+      name: run
+    - hostPath:
+        path: /var/lib/docker/containers
+      name: docker
+    - hostPath:
+        path: /var/log/pods
+      name: pods
+    - name: loki-promtail-token-ccc4w
+      secret:
+        secretName: loki-promtail-token-ccc4w
+- apiVersion: v1
+  kind: Pod
+  metadata:
+    labels:
+      app: prometheus
+      chart: prometheus-11.16.9
+      component: node-exporter
+      controller-revision-hash: 96bb9fb5c
+      heritage: Helm
+      pod-template-generation: "1"
+      release: loki
+    name: loki-prometheus-node-exporter-l94cs
+    namespace: loki
+  spec:
+    affinity:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+          - matchFields:
+            - key: metadata.name
+              operator: In
+              values:
+              - pi4
+    containers:
+    - args:
+      - --path.procfs=/host/proc
+      - --path.sysfs=/host/sys
+      - --web.listen-address=:9100
+      image: prom/node-exporter:v1.0.1
+      name: prometheus-node-exporter
+      ports:
+      - containerPort: 9100
+        name: metrics
+      volumeMounts:
+      - mountPath: /host/proc
+        name: proc
+        readOnly: true
+      - mountPath: /host/sys
+        name: sys
+        readOnly: true
+      - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+        name: loki-prometheus-node-exporter-token-7hzhb
+        readOnly: true
+    hostNetwork: true
+    hostPID: true
+    priority: 0
+    serviceAccountName: loki-prometheus-node-exporter
+    tolerations:
+    - operator: Exists
+    - effect: NoExecute
+      key: node.kubernetes.io/not-ready
+      operator: Exists
+    - effect: NoExecute
+      key: node.kubernetes.io/unreachable
+      operator: Exists
+    - effect: NoSchedule
+      key: node.kubernetes.io/disk-pressure
+      operator: Exists
+    - effect: NoSchedule
+      key: node.kubernetes.io/memory-pressure
+      operator: Exists
+    - effect: NoSchedule
+      key: node.kubernetes.io/pid-pressure
+      operator: Exists
+    - effect: NoSchedule
+      key: node.kubernetes.io/unschedulable
+      operator: Exists
+    - effect: NoSchedule
+      key: node.kubernetes.io/network-unavailable
+      operator: Exists
+    volumes:
+    - hostPath:
+        path: /proc
+      name: proc
+    - hostPath:
+        path: /sys
+      name: sys
+    - name: loki-prometheus-node-exporter-token-7hzhb
+      secret:
+        secretName: loki-prometheus-node-exporter-token-7hzhb
+- apiVersion: v1
+  kind: Pod
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/restartedAt: "2022-01-22T00:28:53+01:00"
+      prometheus.io/path: /metrics
+      prometheus.io/port: "9427"
+      prometheus.io/scrape: "true"
+    labels:
+      app: ping-exporter
+      controller-revision-hash: 77c6b47f59
+      pod-template-generation: "3"
+    name: ping-exporter-ck46b
+    namespace: loki
+  spec:
+    affinity:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+          - matchFields:
+            - key: metadata.name
+              operator: In
+              values:
+              - pi4
+    containers:
+    - image: czerwonk/ping_exporter
+      name: ping-exporter-jtsfc
+      ports:
+      - containerPort: 9427
+        hostPort: 9427
+        name: metrics
+      volumeMounts:
+      - mountPath: /config/
+        name: config
+    priority: 0
+    serviceAccountName: default
+    tolerations:
+    - effect: NoExecute
+      key: node.kubernetes.io/not-ready
+      operator: Exists
+    - effect: NoExecute
+      key: node.kubernetes.io/unreachable
+      operator: Exists
+    - effect: NoSchedule
+      key: node.kubernetes.io/disk-pressure
+      operator: Exists
+    - effect: NoSchedule
+      key: node.kubernetes.io/memory-pressure
+      operator: Exists
+    - effect: NoSchedule
+      key: node.kubernetes.io/pid-pressure
+      operator: Exists
+    - effect: NoSchedule
+      key: node.kubernetes.io/unschedulable
+      operator: Exists
+    volumes:
+    - configMap:
+        name: ping-exporter
+      name: config
+- apiVersion: v1
+  kind: Pod
+  metadata:
+    labels:
+      app: prometheus
+      chart: prometheus-11.16.9
+      component: node-exporter
+      controller-revision-hash: 96bb9fb5c
+      heritage: Helm
+      pod-template-generation: "1"
+      release: loki
+    name: loki-prometheus-node-exporter-n5k25
+    namespace: loki
+  spec:
+    affinity:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+          - matchFields:
+            - key: metadata.name
+              operator: In
+              values:
+              - pi4a
+    containers:
+    - args:
+      - --path.procfs=/host/proc
+      - --path.sysfs=/host/sys
+      - --web.listen-address=:9100
+      image: prom/node-exporter:v1.0.1
+      name: prometheus-node-exporter
+      ports:
+      - containerPort: 9100
+        name: metrics
+      volumeMounts:
+      - mountPath: /host/proc
+        name: proc
+        readOnly: true
+      - mountPath: /host/sys
+        name: sys
+        readOnly: true
+      - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+        name: loki-prometheus-node-exporter-token-7hzhb
+        readOnly: true
+    hostNetwork: true
+    hostPID: true
+    priority: 0
+    serviceAccountName: loki-prometheus-node-exporter
+    tolerations:
+    - operator: Exists
+    - effect: NoExecute
+      key: node.kubernetes.io/not-ready
+      operator: Exists
+    - effect: NoExecute
+      key: node.kubernetes.io/unreachable
+      operator: Exists
+    - effect: NoSchedule
+      key: node.kubernetes.io/disk-pressure
+      operator: Exists
+    - effect: NoSchedule
+      key: node.kubernetes.io/memory-pressure
+      operator: Exists
+    - effect: NoSchedule
+      key: node.kubernetes.io/pid-pressure
+      operator: Exists
+    - effect: NoSchedule
+      key: node.kubernetes.io/unschedulable
+      operator: Exists
+    - effect: NoSchedule
+      key: node.kubernetes.io/network-unavailable
+      operator: Exists
+    volumes:
+    - hostPath:
+        path: /proc
+      name: proc
+    - hostPath:
+        path: /sys
+      name: sys
+    - name: loki-prometheus-node-exporter-token-7hzhb
+      secret:
+        secretName: loki-prometheus-node-exporter-token-7hzhb
+- apiVersion: v1
+  kind: Pod
+  metadata:
+    annotations:
+      checksum/config: fd74389a2862aeb2df7c193d74824ebd1a14c8c061df4bc9f5bb6ce1cbae4b8c
+      prometheus.io/port: http-metrics
+      prometheus.io/scrape: "true"
+    labels:
+      app: loki
+      controller-revision-hash: loki-5c59c4fd4c
+      name: loki
+      release: loki
+      statefulset.kubernetes.io/pod-name: loki-0
+    name: loki-0
+    namespace: loki
+  spec:
+    containers:
+    - args:
+      - -config.file=/etc/loki/loki.yaml
+      image: grafana/loki:2.1.0
+      livenessProbe:
+        httpGet:
+          path: /ready
+          port: http-metrics
+        initialDelaySeconds: 45
+      name: loki
+      ports:
+      - containerPort: 3100
+        name: http-metrics
+      readinessProbe:
+        httpGet:
+          path: /ready
+          port: http-metrics
+        initialDelaySeconds: 45
+      securityContext:
+        readOnlyRootFilesystem: true
+      volumeMounts:
+      - mountPath: /etc/loki
+        name: config
+      - mountPath: /data
+        name: storage
+      - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+        name: loki-token-pbmml
+        readOnly: true
+    hostname: loki-0
+    priority: 0
+    securityContext:
+      fsGroup: 10001
+      runAsGroup: 10001
+      runAsNonRoot: true
+      runAsUser: 10001
+    serviceAccountName: loki
+    subdomain: loki-headless
+    terminationGracePeriodSeconds: 4800
+    tolerations:
+    - effect: NoExecute
+      key: node.kubernetes.io/not-ready
+      operator: Exists
+      tolerationSeconds: 300
+    - effect: NoExecute
+      key: node.kubernetes.io/unreachable
+      operator: Exists
+      tolerationSeconds: 300
+    volumes:
+    - name: config
+      secret:
+        secretName: loki
+    - name: storage
+    - name: loki-token-pbmml
+      secret:
+        secretName: loki-token-pbmml
+- apiVersion: v1
+  kind: Pod
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/restartedAt: "2022-01-22T00:28:53+01:00"
+      prometheus.io/path: /metrics
+      prometheus.io/port: "9427"
+      prometheus.io/scrape: "true"
+    labels:
+      app: ping-exporter
+      controller-revision-hash: 77c6b47f59
+      pod-template-generation: "3"
+    name: ping-exporter-jpmbk
+    namespace: loki
+  spec:
+    affinity:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+          - matchFields:
+            - key: metadata.name
+              operator: In
+              values:
+              - pi4a
+    containers:
+    - image: czerwonk/ping_exporter
+      name: ping-exporter-jtsfc
+      ports:
+      - containerPort: 9427
+        hostPort: 9427
+        name: metrics
+      volumeMounts:
+      - mountPath: /config/
+        name: config
+    priority: 0
+    serviceAccountName: default
+    tolerations:
+    - effect: NoExecute
+      key: node.kubernetes.io/not-ready
+      operator: Exists
+    - effect: NoExecute
+      key: node.kubernetes.io/unreachable
+      operator: Exists
+    - effect: NoSchedule
+      key: node.kubernetes.io/disk-pressure
+      operator: Exists
+    - effect: NoSchedule
+      key: node.kubernetes.io/memory-pressure
+      operator: Exists
+    - effect: NoSchedule
+      key: node.kubernetes.io/pid-pressure
+      operator: Exists
+    - effect: NoSchedule
+      key: node.kubernetes.io/unschedulable
+      operator: Exists
+    volumes:
+    - configMap:
+        name: ping-exporter
+      name: config
+- apiVersion: v1
+  kind: Pod
+  metadata:
+    labels:
+      app.kubernetes.io/instance: loki
+      app.kubernetes.io/name: kube-state-metrics
+      pod-template-hash: c8cb5f4c9
+    name: loki-kube-state-metrics-c8cb5f4c9-gtq4b
+    namespace: loki
+  spec:
+    containers:
+    - args:
+      - --collectors=certificatesigningrequests
+      - --collectors=configmaps
+      - --collectors=cronjobs
+      - --collectors=daemonsets
+      - --collectors=deployments
+      - --collectors=endpoints
+      - --collectors=horizontalpodautoscalers
+      - --collectors=ingresses
+      - --collectors=jobs
+      - --collectors=limitranges
+      - --collectors=mutatingwebhookconfigurations
+      - --collectors=namespaces
+      - --collectors=networkpolicies
+      - --collectors=nodes
+      - --collectors=persistentvolumeclaims
+      - --collectors=persistentvolumes
+      - --collectors=poddisruptionbudgets
+      - --collectors=pods
+      - --collectors=replicasets
+      - --collectors=replicationcontrollers
+      - --collectors=resourcequotas
+      - --collectors=secrets
+      - --collectors=services
+      - --collectors=statefulsets
+      - --collectors=storageclasses
+      - --collectors=validatingwebhookconfigurations
+      - --collectors=volumeattachments
+      image: k8s.gcr.io/kube-state-metrics-arm64:v1.9.5
+      livenessProbe:
+        httpGet:
+          path: /healthz
+          port: 8080
+        initialDelaySeconds: 5
+        timeoutSeconds: 5
+      name: kube-state-metrics
+      ports:
+      - containerPort: 8080
+      readinessProbe:
+        httpGet:
+          port: 8080
+        initialDelaySeconds: 5
+        timeoutSeconds: 5
+      volumeMounts:
+      - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+        name: loki-kube-state-metrics-token-jbx52
+        readOnly: true
+    nodeSelector:
+      pi-node/role: stateful
+    priority: 0
+    securityContext:
+      fsGroup: 65534
+      runAsGroup: 65534
+      runAsUser: 65534
+    serviceAccountName: loki-kube-state-metrics
+    tolerations:
+    - operator: Exists
+    volumes:
+    - name: loki-kube-state-metrics-token-jbx52
+      secret:
+        secretName: loki-kube-state-metrics-token-jbx52
+- apiVersion: v1
+  kind: Pod
+  metadata:
+    annotations:
+      checksum/config: 19aac1c3228c4f4807da30538c8541c01e6b17fa3b518f80ab4f400621bb175c
+      checksum/dashboards-json-config: 01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b
+      checksum/sc-dashboard-provider-config: 01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b
+      checksum/secret: 4fa9a6b34aee005adb02400367a5a30c4fcbe470365a9f83c9d4b685dd57f5a6
+    labels:
+      app.kubernetes.io/instance: loki
+      app.kubernetes.io/name: grafana
+      pod-template-hash: b9768bcd9
+    name: loki-grafana-b9768bcd9-tkmtk
+    namespace: loki
+  spec:
+    containers:
+    - env:
+      - name: GF_SECURITY_ADMIN_USER
+        valueFrom:
+          secretKeyRef:
+            key: admin-user
+            name: loki-grafana
+      - name: GF_SECURITY_ADMIN_PASSWORD
+        valueFrom:
+          secretKeyRef:
+            key: admin-password
+            name: loki-grafana
+      image: grafana/grafana:6.7.0
+      livenessProbe:
+        failureThreshold: 10
+        httpGet:
+          path: /api/health
+          port: 3000
+        initialDelaySeconds: 60
+        timeoutSeconds: 30
+      name: grafana
+      ports:
+      - containerPort: 80
+        name: service
+      - containerPort: 3000
+        name: grafana
+      readinessProbe:
+        httpGet:
+          path: /api/health
+          port: 3000
+      volumeMounts:
+      - mountPath: /etc/grafana/grafana.ini
+        name: config
+        subPath: grafana.ini
+      - mountPath: /var/lib/grafana
+        name: storage
+      - mountPath: /etc/grafana/provisioning/datasources
+        name: sc-datasources-volume
+      - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+        name: loki-grafana-token-65jzq
+        readOnly: true
+    initContainers:
+    - env:
+      - name: METHOD
+        value: LIST
+      - name: LABEL
+        value: grafana_datasource
+      - name: FOLDER
+        value: /etc/grafana/provisioning/datasources
+      - name: RESOURCE
+        value: both
+      image: kiwigrid/k8s-sidecar:0.1.209
+      name: grafana-sc-datasources
+      volumeMounts:
+      - mountPath: /etc/grafana/provisioning/datasources
+        name: sc-datasources-volume
+      - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+        name: loki-grafana-token-65jzq
+        readOnly: true
+    nodeSelector:
+      pi-node/role: stateful
+    priority: 0
+    securityContext:
+      fsGroup: 472
+      runAsGroup: 472
+      runAsUser: 472
+    serviceAccountName: loki-grafana
+    tolerations:
+    - operator: Exists
+    volumes:
+    - configMap:
+        name: loki-grafana
+      name: config
+    - name: storage
+    - name: sc-datasources-volume
+    - name: loki-grafana-token-65jzq
+      secret:
+        secretName: loki-grafana-token-65jzq
+- apiVersion: v1
+  kind: Pod
+  metadata:
+    labels:
+      app: prometheus
+      chart: prometheus-11.16.9
+      component: server
+      heritage: Helm
+      pod-template-hash: b6dc45c79
+      release: loki
+    name: loki-prometheus-server-b6dc45c79-mhm76
+    namespace: loki
+  spec:
+    containers:
+    - args:
+      - --volume-dir=/etc/config
+      - --webhook-url=http://127.0.0.1:9090/-/reload
+      image: jimmidyson/configmap-reload:v0.4.0
+      name: prometheus-server-configmap-reload
+      volumeMounts:
+      - mountPath: /etc/config
+        name: config-volume
+        readOnly: true
+      - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+        name: loki-prometheus-server-token-bt9hw
+        readOnly: true
+    - args:
+      - --storage.tsdb.retention.time=2d
+      - --config.file=/etc/config/prometheus.yml
+      - --storage.tsdb.path=/data
+      - --web.console.libraries=/etc/prometheus/console_libraries
+      - --web.console.templates=/etc/prometheus/consoles
+      - --web.enable-lifecycle
+      image: prom/prometheus:v2.21.0
+      livenessProbe:
+        httpGet:
+          path: /-/healthy
+          port: 9090
+        initialDelaySeconds: 30
+        periodSeconds: 15
+        timeoutSeconds: 30
+      name: prometheus-server
+      ports:
+      - containerPort: 9090
+      readinessProbe:
+        httpGet:
+          path: /-/ready
+          port: 9090
+        initialDelaySeconds: 30
+        periodSeconds: 5
+        timeoutSeconds: 30
+      volumeMounts:
+      - mountPath: /etc/config
+        name: config-volume
+      - mountPath: /data
+        name: storage-volume
+      - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+        name: loki-prometheus-server-token-bt9hw
+        readOnly: true
+    nodeSelector:
+      pi-node/role: stateful
+    priority: 0
+    securityContext:
+      fsGroup: 65534
+      runAsGroup: 65534
+      runAsNonRoot: true
+      runAsUser: 65534
+    serviceAccountName: loki-prometheus-server
+    terminationGracePeriodSeconds: 300
+    tolerations:
+    - operator: Exists
+    volumes:
+    - configMap:
+        name: loki-prometheus-server
+      name: config-volume
+    - name: storage-volume
+    - name: loki-prometheus-server-token-bt9hw
+      secret:
+        secretName: loki-prometheus-server-token-bt9hw
+- apiVersion: v1
+  kind: Pod
+  metadata:
+    labels:
+      app: prometheus
+      chart: prometheus-11.16.9
+      component: alertmanager
+      heritage: Helm
+      pod-template-hash: 6859bb6fd
+      release: loki
+    name: loki-prometheus-alertmanager-6859bb6fd-742c7
+    namespace: loki
+  spec:
+    containers:
+    - args:
+      - --config.file=/etc/config/alertmanager.yml
+      - --storage.path=/data
+      - --cluster.advertise-address=$(POD_IP):6783
+      - --web.external-url=http://localhost:9093
+      env:
+      - name: POD_IP
+        valueFrom:
+          fieldRef:
+            fieldPath: status.podIP
+      image: prom/alertmanager:v0.21.0
+      name: prometheus-alertmanager
+      ports:
+      - containerPort: 9093
+      readinessProbe:
+        httpGet:
+          path: /-/ready
+          port: 9093
+        initialDelaySeconds: 30
+        timeoutSeconds: 30
+      volumeMounts:
+      - mountPath: /etc/config
+        name: config-volume
+      - mountPath: /data
+        name: storage-volume
+      - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+        name: loki-prometheus-alertmanager-token-rs95h
+        readOnly: true
+    - args:
+      - --volume-dir=/etc/config
+      - --webhook-url=http://127.0.0.1:9093/-/reload
+      image: jimmidyson/configmap-reload:v0.4.0
+      name: prometheus-alertmanager-configmap-reload
+      volumeMounts:
+      - mountPath: /etc/config
+        name: config-volume
+        readOnly: true
+      - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+        name: loki-prometheus-alertmanager-token-rs95h
+        readOnly: true
+    nodeSelector:
+      pi-node/role: stateful
+    priority: 0
+    securityContext:
+      fsGroup: 65534
+      runAsGroup: 65534
+      runAsNonRoot: true
+      runAsUser: 65534
+    serviceAccountName: loki-prometheus-alertmanager
+    tolerations:
+    - operator: Exists
+    volumes:
+    - configMap:
+        name: loki-prometheus-alertmanager
+      name: config-volume
+    - name: storage-volume
+    - name: loki-prometheus-alertmanager-token-rs95h
+      secret:
+        secretName: loki-prometheus-alertmanager-token-rs95h
+- apiVersion: v1
+  kind: Pod
+  metadata:
+    labels:
+      app: prometheus
+      chart: prometheus-11.16.9
+      component: pushgateway
+      heritage: Helm
+      pod-template-hash: 546c6fc4ff
+      release: loki
+    name: loki-prometheus-pushgateway-546c6fc4ff-sx69c
+    namespace: loki
+  spec:
+    containers:
+    - image: prom/pushgateway:v1.2.0
+      livenessProbe:
+        httpGet:
+          path: /-/healthy
+          port: 9091
+        initialDelaySeconds: 10
+        timeoutSeconds: 10
+      name: prometheus-pushgateway
+      ports:
+      - containerPort: 9091
+      readinessProbe:
+        httpGet:
+          path: /-/ready
+          port: 9091
+        initialDelaySeconds: 10
+        timeoutSeconds: 10
+      volumeMounts:
+      - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+        name: loki-prometheus-pushgateway-token-5lm9s
+        readOnly: true
+    nodeSelector:
+      pi-node/role: stateful
+    priority: 0
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 65534
+    serviceAccountName: loki-prometheus-pushgateway
+    tolerations:
+    - operator: Exists
+    volumes:
+    - name: loki-prometheus-pushgateway-token-5lm9s
+      secret:
+        secretName: loki-prometheus-pushgateway-token-5lm9s
+- apiVersion: v1
+  kind: Pod
+  metadata:
+    annotations:
+      checksum/config: 8c87a13d751c87f1b8726a725bffbe18c827c5e60d4a7aea47cd4871ea8271f3
+      kubectl.kubernetes.io/restartedAt: "2022-01-20T17:44:14+01:00"
+      prometheus.io/port: http-metrics
+      prometheus.io/scrape: "true"
+    labels:
+      app: promtail
+      controller-revision-hash: b6c56d7c7
+      pod-template-generation: "2"
+      release: loki
+    name: loki-promtail-fr2hj
+    namespace: loki
+  spec:
+    affinity:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+          - matchFields:
+            - key: metadata.name
+              operator: In
+              values:
+              - pi4a
+    containers:
+    - args:
+      - -config.file=/etc/promtail/promtail.yaml
+      - -client.url=http://loki:3100/loki/api/v1/push
+      env:
+      - name: HOSTNAME
+        valueFrom:
+          fieldRef:
+            fieldPath: spec.nodeName
+      image: grafana/promtail:2.1.0
+      name: promtail
+      ports:
+      - containerPort: 3101
+        name: http-metrics
+      readinessProbe:
+        failureThreshold: 5
+        httpGet:
+          path: /ready
+          port: http-metrics
+        initialDelaySeconds: 10
+      securityContext:
+        readOnlyRootFilesystem: true
+        runAsGroup: 0
+        runAsUser: 0
+      volumeMounts:
+      - mountPath: /etc/promtail
+        name: config
+      - mountPath: /run/promtail
+        name: run
+      - mountPath: /var/lib/docker/containers
+        name: docker
+        readOnly: true
+      - mountPath: /var/log/pods
+        name: pods
+        readOnly: true
+      - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+        name: loki-promtail-token-ccc4w
+        readOnly: true
+    priority: 0
+    serviceAccountName: loki-promtail
+    tolerations:
+    - effect: NoSchedule
+      key: node-role.kubernetes.io/master
+      operator: Exists
+    - effect: NoExecute
+      key: node.kubernetes.io/not-ready
+      operator: Exists
+    - effect: NoExecute
+      key: node.kubernetes.io/unreachable
+      operator: Exists
+    - effect: NoSchedule
+      key: node.kubernetes.io/disk-pressure
+      operator: Exists
+    - effect: NoSchedule
+      key: node.kubernetes.io/memory-pressure
+      operator: Exists
+    - effect: NoSchedule
+      key: node.kubernetes.io/pid-pressure
+      operator: Exists
+    - effect: NoSchedule
+      key: node.kubernetes.io/unschedulable
+      operator: Exists
+    volumes:
+    - configMap:
+        name: loki-promtail
+      name: config
+    - hostPath:
+        path: /run/promtail
+      name: run
+    - hostPath:
+        path: /var/lib/docker/containers
+      name: docker
+    - hostPath:
+        path: /var/log/pods
+      name: pods
+    - name: loki-promtail-token-ccc4w
+      secret:
+        secretName: loki-promtail-token-ccc4w
+kind: List
+metadata:
+  resourceVersion: ""
+  selfLink: ""
