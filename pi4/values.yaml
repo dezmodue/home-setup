@@ -161,9 +161,10 @@ loki:
       {{- end }}
       tail_proxy_url: http://{{ include "loki.querierFullname" . }}:3100
 
+    {{- if .Values.loki.compactor}}
     compactor:
-      working_directory: /data/loki/boltdb-shipper-compactor
-      shared_store: aws
+    {{- toYaml .Values.loki.compactor | nindent 2}}
+    {{- end}}
 
     ruler:
       storage:
@@ -180,20 +181,21 @@ loki:
   # -- Check https://grafana.com/docs/loki/latest/configuration/#schema_config for more info on how to configure schemas
   schemaConfig:
     configs:
-      - from: 2020-09-07
-        store: boltdb-shipper
-        object_store: aws
-        schema: v11
+      - from: "2020-09-07"
         index:
-          prefix: loki_index_
           period: 24h
+          prefix: loki_index_
+        object_store: s3
+        schema: v11
+        store: boltdb-shipper
 
   # -- Check https://grafana.com/docs/loki/latest/configuration/#storage_config for more info on how to configure storages
   storageConfig:
     boltdb_shipper:
-      shared_store: s3
       active_index_directory: /var/loki/index
       cache_location: /var/loki/cache
+      shared_store: s3
+      resync_interval: 5s
       cache_ttl: 24h
     # filesystem:
     #   directory: /var/loki/chunks
@@ -201,12 +203,16 @@ loki:
     #   azure: {}
     #   gcs: {}
     aws:
-      bucketnames: "pi4a-loki"
+      bucketnames: pi4a-loki
       region: eu-west-1
-      access_key_id: 
-      secret_access_key: 
+      # access_key_id: 
+      # secret_access_key: 
       s3forcepathstyle: true
   #   boltdb: {}
+  compactor:
+    shared_store: s3
+    working_directory: /var/loki/boltdb-shipper-compactor
+    compaction_interval: 1m
 
   # -- Structured loki configuration, takes precedence over `loki.config`, `loki.schemaConfig`, `loki.storageConfig`
   structuredConfig: {}
@@ -322,7 +328,17 @@ ingester:
   # -- Additional CLI args for the ingester
   extraArgs: []
   # -- Environment variables to add to the ingester pods
-  extraEnv: []
+  extraEnv:         
+    - name: AWS_ACCESS_KEY_ID
+      valueFrom:
+        secretKeyRef:
+          key: AWS_ACCESS_KEY
+          name: loki-s3
+    - name: AWS_SECRET_ACCESS_KEY
+      valueFrom:
+        secretKeyRef:
+          key: AWS_SECRET_KEY
+          name: loki-s3
   # -- Environment variables from secrets or configmaps to add to the ingester pods
   extraEnvFrom: []
   # -- Volume mounts to add to the ingester pods
@@ -503,7 +519,17 @@ querier:
   # -- Additional CLI args for the querier
   extraArgs: []
   # -- Environment variables to add to the querier pods
-  extraEnv: []
+  extraEnv:
+    - name: AWS_ACCESS_KEY_ID
+      valueFrom:
+        secretKeyRef:
+          key: AWS_ACCESS_KEY
+          name: loki-s3
+    - name: AWS_SECRET_ACCESS_KEY
+      valueFrom:
+        secretKeyRef:
+          key: AWS_SECRET_KEY
+          name: loki-s3
   # -- Environment variables from secrets or configmaps to add to the querier pods
   extraEnvFrom: []
   # -- Volume mounts to add to the querier pods
@@ -1102,7 +1128,17 @@ compactor:
   # -- Additional CLI args for the compactor
   extraArgs: []
   # -- Environment variables to add to the compactor pods
-  extraEnv: []
+  extraEnv:
+    - name: AWS_ACCESS_KEY_ID
+      valueFrom:
+        secretKeyRef:
+          key: AWS_ACCESS_KEY
+          name: loki-s3
+    - name: AWS_SECRET_ACCESS_KEY
+      valueFrom:
+        secretKeyRef:
+          key: AWS_SECRET_KEY
+          name: loki-s3
   # -- Environment variables from secrets or configmaps to add to the compactor pods
   extraEnvFrom: []
   # -- Volume mounts to add to the compactor pods
