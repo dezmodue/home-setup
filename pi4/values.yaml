@@ -111,6 +111,7 @@ loki:
       reject_old_samples_max_age: 168h
       max_cache_freshness_per_query: 10m
       split_queries_by_interval: 15m
+      retention_period: 168h
 
     {{- if .Values.loki.schemaConfig}}
     schema_config:
@@ -212,7 +213,10 @@ loki:
   compactor:
     shared_store: s3
     working_directory: /var/loki/boltdb-shipper-compactor
-    compaction_interval: 1m
+    compaction_interval: 5m
+    retention_enabled: true
+    retention_delete_delay: 2h
+    retention_delete_worker_count: 150
 
   # -- Structured loki configuration, takes precedence over `loki.config`, `loki.schemaConfig`, `loki.storageConfig`
   structuredConfig: {}
